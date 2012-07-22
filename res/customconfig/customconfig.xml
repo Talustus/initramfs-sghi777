@@ -1,9 +1,9 @@
 <settingsRoot>
   <settingsTab name="CPU">
-    <!-- settingsPane description="These settings control CFS (Complete Fair Scheduler) Task Scheduler Settings" name="CFS Settings">
+    <settingsPane description="These settings control CFS (Complete Fair Scheduler) Task Scheduler Settings" name="CFS Settings">
       <checkbox description="Disabling GENTLE_FAIR_SLEEPERS may give you better UI responsiveness." name="GENTLE_FAIR_SLEEPERS" action="schedfeat GENTLE_FAIR_SLEEPERS" label="GENTLE_FAIR_SLEEPERS"/>
       <checkbox description="Using ARCH_POWER enables the use of arm topology power functions instead of generic ones." name="ARCH_POWER" action="schedfeat ARCH_POWER" label="ARCH_POWER"/>
-    </settingsPane -->
+    </settingsPane>
     <settingsPane description="The following settings control CPU hotplug parameters. Depending on the following parameters, the second core is enabled or disabled." 
 		name="CPU Hotplug Settings">
        <spinner description="Sets the CPU Hotplug Mode. Hotplug mode will dynamically switch the second core on and off. Using second core always-off or always-on modes will make the other hotplug parameters useless." name="Hotplug Mode" action="secondcore">
@@ -11,18 +11,11 @@
              <spinnerItem name="Second core always-off" value="always-off"/> 
              <spinnerItem name="Second core always-on" value="always-on"/> 
        </spinner>
-       <seekBar description="second core will be enabled when the load goes above this threshold (default is 30)"
-                name="load_h0" action="generic /sys/module/stand_hotplug/parameters/load_h0" unit="%" min="0" reversed="false" step="1" max="35"/>
-       <seekBar description="second core will be disabled when the load goes below this threshold (default is 20)"
-                name="load_l1" action="generic /sys/module/stand_hotplug/parameters/load_l1" unit="%" min="0" reversed="false" step="1" max="35"/>
-       <seekBar description="(default is 2)"
-                name="min_rq" action="generic /sys/module/stand_hotplug/parameters/min_rq" unit="" min="0" reversed="false" step="1" max="2"/>
-       <seekBar description="(default is 20)"
-                name="load_rq" action="generic /sys/module/stand_hotplug/parameters/load_rq" unit="%" min="5" reversed="false" step="1" max="35"/>
-       <seekBar description="Sets hot plug sampling intervals for screen-on state (default is 100)"
-                name="rate" action="generic /sys/module/stand_hotplug/parameters/rate" unit=" jiffies" min="50" reversed="false" step="50" max="1000"/>
-       <seekBar description="Sets the frequency below which second core will not be turned on, regardless of thresholds. (default: 100000)" 
-		name="freq_min" action="generic /sys/module/stand_hotplug/parameters/freq_min" unit=" kHz" min="0" reversed="false" step="100000" max="1200000"/>
+       <spinner description="Changes CFS granularity and latency settings. Using anything other than stock may decrease benchmark scores but will increase UI responsiveness" name="CFS Tweaks" action="cfs-tweaks">
+             <spinnerItem name="Samsung defaults" value="0"/>
+             <spinnerItem name="Linux kernel defaults" value="1"/>
+             <spinnerItem name="Thunderbolt script defaults" value="2"/>
+       </spinner>
     </settingsPane>
 
     <settingsPane description="" 
@@ -33,21 +26,23 @@
              <spinnerItem name="AFTR only" value="1"/> 
              <spinnerItem name="Idle only" value="0"/> 
       </spinner>
+      <spinner description="Sets the smooth scaling level which prevents ondemand based governors to jump directly to maximum frequency with load spikes. This setting will only change the behavior of ondemand and pegasusq governors." name="Smooth Scaling Level" action="generickmem smooth_level 0 int">
+             <spinnerItem name="1600MHz" value="0"/> 
+             <spinnerItem name="1200MHz" value="4"/> 
+             <spinnerItem name="1000MHz" value="6"/> 
+             <spinnerItem name="800MHz" value="8"/> 
+      </spinner>
+      <spinner description="Sets the number of CPUs to be used in hotplugging (only for PegasusQ)" name="Max CPU Lock" action="generic /sys/devices/system/cpu/cpufreq/pegasusq/max_cpu_lock">
+             <spinnerItem name="Dual core mode" value="2"/>
+             <spinnerItem name="Single core mode" value="1"/>
+      </spinner>
       <seekBar description="Sets the sched_mc value which changes the cpu scheduler behaviour for multi-cpu systems. 0 is Samsung kernel's default value which turns sched_mc off. Setting it to 1 means that the first core will be tried to be loaded more and setting it to 2 will bias task wake-ups to semi-idle cpu package for power savings. (default: 0)"
             name="sched_mc" action="generic /sys/devices/system/cpu/sched_mc_power_savings" unit="" min="0" reversed="false" step="1" max="2"/>
     </settingsPane>
 
     <settingsPane description=""
-		name="CPU Step Count + Undervolting">
-      <spinner description="This setting will change CPU step count (Restart required)." name="CPU Step Count" action="generic /tmp/cpustepcount">
-             <spinnerItem name="5 (200-500-800-1000-1200MHz)" value="5"/> 
-             <spinnerItem name="6 (5-steps + 1400MHz)" value="6"/> 
-             <spinnerItem name="7 (6-steps + 1500MHz)" value="7"/> 
-             <spinnerItem name="8 (6-steps + 100MHz + 1600MHz)" value="8"/> 
-             <spinnerItem name="9 (8-step + 1500MHz)" value="9"/> 
-             <spinnerItem name="18 (All available)" value="18"/> 
-      </spinner>
-      <spinner description="Sets the CPU undervolting value which will be apploed during boot time only. It will not have any effect until you restart your device. Remember: if you change this value and your device doesn't boot you will have to reset extweaks settings using CWM recovery. This value will be applied to all CPU steps before any script or app execution. If you use any script or voltage control app this setting may be overriden by those." name="CPU Undervolting" action="generic /tmp/cpu_undervolting">
+		name="CPU Undervolting">
+      <spinner description="Sets the CPU undervolting value which will be applied during boot time only. It will not have any effect until you restart your device. Remember: if you change this value and your device doesn't boot you will have to reset extweaks settings using CWM recovery. This value will be applied to all CPU steps before any script or app execution. If you use any script or voltage control app this setting may be overriden by those." name="CPU Undervolting" action="generic /tmp/cpu_undervolting">
              <spinnerItem name="No Undervolting" value="0"/> 
              <spinnerItem name=" -25 mV" value="-25"/> 
              <spinnerItem name=" -50 mV" value="-50"/> 
@@ -56,6 +51,30 @@
       </spinner>
     </settingsPane>
 
+    <settingsPane description=""
+		name="CPU Scaling Settings">
+      <spinner description="This setting will change CPU step count (Restart required)." name="CPU Step Count" action="generic /tmp/cpustepcount">
+             <spinnerItem name="5 (200-500-800-1000-1200MHz)" value="5"/> 
+             <spinnerItem name="6 (5-steps + 1400MHz)" value="6"/> 
+             <spinnerItem name="7 (6-steps + 1500MHz)" value="7"/> 
+             <spinnerItem name="8 (6-steps + 100MHz + 1600MHz)" value="8"/> 
+             <spinnerItem name="9 (8-step + 1500MHz)" value="9"/> 
+             <spinnerItem name="18 (All available)" value="18"/> 
+      </spinner>
+       <spinner description="This will set the default CPU governor. Default CPU governor will only be set during early stages of booting (before init.d execution) and can be overriden by later scripts or apps." name="Default CPU Governor" action="generic /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor">
+             <spinnerItem name="pegasusq" value="pegasusq"/> 
+             <spinnerItem name="hotplug" value="hotplug"/> 
+             <spinnerItem name="ondemand" value="ondemand"/> 
+             <spinnerItem name="conservative" value="conservative"/> 
+             <spinnerItem name="lulzactive" value="lulzactive"/> 
+             <spinnerItem name="smartassV2" value="smartassV2"/> 
+             <spinnerItem name="interactive" value="interactive"/> 
+       </spinner>
+       <seekBar description="Scaling maximum frequency (Samsung default: 1200)"
+                name="scaling_max_freq" action="generic /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq" unit=" Mhz" min="100000" reversed="false" step="100000" max="1600000"/>
+       <seekBar description="Scaling minimum frequency (Samsung default: 200)"
+                name="scaling_min_freq" action="generic /sys/devices/system/cpu/cpu0/cpufreq/scaling_min_freq" unit=" Mhz" min="100000" reversed="false" step="100000" max="1600000"/>
+    </settingsPane>
   </settingsTab>
 
   <settingsTab name="GPU">
@@ -123,6 +142,13 @@
 
   </settingsTab>
 
+  <settingsTab name="Audio">
+    <settingsPane description="Headphone Amplification Settings" name="Headphone Amplification">
+      <seekBar description="Headphone Amplifier Level (0-3 which corresponds to 0-1.5-3-6dB)" 
+		name="Headphone Amplifier" action="soundgasm_hp" unit="" min="0" reversed="false" step="1" max="3"/>
+    </settingsPane>
+  </settingsTab>
+
   <settingsTab name="Screen">
     <settingsPane description="Brightness Curve settings which modify auto-brightness behavior." name="Brightness Curve">
        <seekBar description="Sets touchscreen move sensitivity (vitalij value)." 
@@ -135,12 +161,26 @@
 		name="max_gamma" action="generic /sys/class/misc/brightness_curve/max_gamma" unit="" min="0" reversed="false" step="1" max="24"/>
     </settingsPane>
     <settingsPane description="Other Settings" name="Other Settings">
+	<checkbox description="Enable LCD-Powersaving Mode" name="LCD-Powersaving Mode" 
+		action="generic01 /sys/class/lcd/panel/power_reduce" label="LCD-Powersaving Mode" />
+
        <seekBar description="User adjustable gamma shift." 
 		name="Gamma Shift" action="generic /sys/devices/platform/samsung-pd.2/s3cfb.0/spi_gpio.3/spi_master/spi3/spi3.0/lcd/panel/user_gamma_adjust" unit="" min="-50" reversed="false" step="5" max="50"/>
        <seekBar description="Vibration intensity level (default 6)" 
 		name="Vibration Intensity" action="generic /sys/devices/platform/tspdrv/vibrator_level" unit="" min="0" reversed="false" step="1" max="6"/>
+
+	<checkbox description="Enable inverting the screen colors by quickly pressing Home button several times (Count can be configured below)" 
+		name="mDNIe Negative Toggle" action="generic01 /sys/module/gpio_keys/parameters/mdnie_shortcut_enabled" label="mDNIe Negative Toggle"/>
+	<spinner description="Negative Color, Screen effect settings, Fast Click Home for number of times configured to activate MOD" 
+		name="Negative Screen inverting." action="negative_screen">
+		<spinnerItem name="Set 4 Clicks (default)" value="1"/>
+		<spinnerItem name="Set 5 Clicks" value="2"/>
+		<spinnerItem name="Set 6 Clicks" value="3"/>
+		<spinnerItem name="Feature Disabled" value="4"/>
+	</spinner>
     </settingsPane>
   </settingsTab>
+
   <settingsTab name="BLN">
     <settingsPane description="BackLightNotification and Touchkey related Settings" name="BackLightNotification">
        <checkbox description="BackLightNotification" name="BLN" action="generic /sys/class/misc/notification/notification_enabled" label="BLN"/>
@@ -150,10 +190,10 @@
              <spinnerItem name="3 minutes" value="180000"/> 
              <spinnerItem name="5 minutes" value="300000"/> 
              <spinnerItem name="10 minutes" value="600000"/> 
-             <spinnerItem name="20 minutes" value="12000000"/> 
-             <spinnerItem name="30 minutes" value="18000000"/> 
-             <spinnerItem name="60 minutes" value="36000000"/> 
-             <spinnerItem name="120 minutes" value="72000000"/> 
+             <spinnerItem name="20 minutes" value="1200000"/> 
+             <spinnerItem name="30 minutes" value="1800000"/> 
+             <spinnerItem name="60 minutes" value="3600000"/> 
+             <spinnerItem name="120 minutes" value="7200000"/> 
        </spinner>
        <spinner description="This setting will set led behavior in BLN." name="BLN Effect" action="bln_effect">
              <spinnerItem name="Steady" value="0"/> 
@@ -187,14 +227,6 @@
              <spinnerItem name="500MHz" value="500000"/> 
              <spinnerItem name="200MHz" value="200000"/> 
       </spinner -->
-      <spinner description="This will set the default CPU governor. Default CPU governor will only be set during early stages of booting (before init.d execution) and can be overriden by later scripts or apps." name="Default CPU Governor" action="generic /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor">
-             <spinnerItem name="pegasusq" value="pegasusq"/> 
-             <spinnerItem name="ondemand" value="ondemand"/> 
-             <spinnerItem name="conservative" value="conservative"/> 
-             <spinnerItem name="lulzactive" value="lulzactive"/> 
-             <spinnerItem name="smartassV2" value="smartassV2"/> 
-             <spinnerItem name="interactive" value="interactive"/> 
-      </spinner>
       <spinner description="This will set the default I/O scheduler. Default I/O scheduler will only be set during early stages of booting (before init.d execution) and can be overriden by later scripts or apps." name="Default I/O Scheduler" action="generic /sys/block/mmcblk0/queue/scheduler">
              <spinnerItem name="sio" value="sio"/> 
              <spinnerItem name="noop" value="noop"/> 
@@ -207,6 +239,12 @@
              <spinnerItem name="AC,Misc:650mA, USB:450mA" value="2"/> 
              <spinnerItem name="All:650mA (risky for USB ports)" value="3"/> 
       </spinner>
+      <spinner description="Change USB connection mode. Either leave it as default or force it to mass storage mode (you will see your sdcards as disks) or mtp" name="USB Mass Storage Mode" action="usb-mode">
+             <spinnerItem name="Default" value="default"/> 
+             <spinnerItem name="Force Mass Storage Mode" value="mass_storage-adb"/> 
+             <spinnerItem name="Force MTP Mode" value="mtp-adb"/> 
+      </spinner>
+      <checkbox description="If checked, BetterBatteryStatus will report exclusive (non-overlapping) wakelock statistics." name="Exclusive Wakelock Stats" action="generic01 /sys/module/wakelock/parameters/default_stats" label="Exclusive Wakelock Stats"/>
       <button description="If you think that the fuel gauge chip is behaving weird use this button to reset it. Give it a few hours after you reset the gauge. It may still show you funny values for those period, then the battery percentage should be fine." name="Reset Fuel-Gauge Chip" action="reset-fuelgauge" label="Reset Fuel-Gauge Chip"/>
     </settingsPane>
     <settingsPane description="Removing/Reinstalling root to support some apps which requires you not to have a rooted phone." name="Remove/Reinstall Root">

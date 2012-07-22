@@ -1,12 +1,20 @@
 #!/sbin/busybox sh
-# Logging
-#/sbin/busybox cp /data/user.log /data/user.log.bak
-#/sbin/busybox rm /data/user.log
-#exec >>/data/user.log
-#exec 2>&1
-
+#
+## Create the kernel data directory
 mkdir /data/.dream
 chmod 777 /data/.dream
+
+## Enable "post-init" Logging do not enable if /sbin/init is already logging ...
+# mv /data/.dream/post-init.log /data/.dream/post-init.log.bak
+# busybox date >/data/.dream/post-init.log
+# exec >>/data/.dream/post-init.log 2>&1
+
+ccxmlsum=`md5sum /res/customconfig/customconfig.xml | awk '{print $1}'`
+if [ "a${ccxmlsum}" != "a`cat /data/.dream/.ccxmlsum`" ];
+then
+  rm -f /data/.dream/*.profile
+  echo ${ccxmlsum} > /data/.dream/.ccxmlsum
+fi
 [ ! -f /data/.dream/default.profile ] && cp /res/customconfig/default.profile /data/.dream
 [ ! -f /data/.dream/battery.profile ] && cp /res/customconfig/battery.profile /data/.dream
 [ ! -f /data/.dream/performance.profile ] && cp /res/customconfig/performance.profile /data/.dream
@@ -14,6 +22,9 @@ chmod 777 /data/.dream
 . /res/customconfig/customconfig-helper
 read_defaults
 read_config
+
+## cpu undervolting
+echo "${cpu_undervolting}" > /sys/devices/system/cpu/cpu0/cpufreq/vdd_levels
 
 ## change cpu step counts
 case "${cpustepcount}" in
@@ -58,8 +69,14 @@ if [ "$logger" == "off" ];then
   echo 0 > /sys/module/xt_qtaguid/parameters/debug_mask
 fi
 
+#apply last soundgasm level on boot
+/res/uci.sh soundgasm_hp $soundgasm_hp
+
 ## for ntfs automounting
 insmod /lib/modules/fuse.ko
+mkdir /mnt/ntfs
+mount -t tmpfs tmpfs /mnt/ntfs
+chmod 777 /mnt/ntfs
 
 ## /sbin/busybox sh /sbin/ext/busybox.sh
 
@@ -67,7 +84,8 @@ insmod /lib/modules/fuse.ko
 
 /sbin/busybox sh /sbin/ext/install.sh
 
-## run this because user may have chosen not to install root at boot but he may need it later and install it using ExTweaks
+## run this because user may have chosen not to install root at boot
+## but he may need it later and install it using ExTweaks
 /sbin/busybox sh /sbin/ext/su-helper.sh
 
 ##### Early-init phase tweaks #####
@@ -83,13 +101,15 @@ sleep 30
 ) &
 
 # apply ExTweaks defaults
-/res/uci.sh apply &
+/res/uci.sh apply
 
 ##### init scripts #####
 (
-sleep 10
 /sbin/busybox sh /sbin/ext/run-init-scripts.sh
 )&
+
+#usb mode
+# /res/customconfig/actions/usb-mode ${usb_mode}
 
 #read sync < /data/sync_fifo
 #rm /data/sync_fifo
